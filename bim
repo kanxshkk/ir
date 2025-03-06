@@ -1,0 +1,114 @@
+"Revised Probability"
+
+#BIM
+from sklearn.feature_extraction.text import CountVectorizer
+import pandas as pd
+import numpy as np
+from numpy import dot
+from numpy.linalg import norm
+
+documents = [
+    "Statistical approaches to processing natural language text have become dominant in recent years. This foundational text is the first comprehensive introduction to statistical natural language processing.",
+    "This book offers a highly accessible introduction to natural language processing, the field that supports a variety of language technologies, from predictive text and email filtering to automatic summarization and translation.",
+    "Class-tested and coherent, this groundbreaking new textbook teaches web-era information retrieval, including web search and the related areas of text classification and text clustering from basic concepts.",
+    "An information retrieval (IR) system is designed to analyze, process and store sources of information and retrieve those that match a particular user's requirements.",
+    "Processing multimedia content has emerged as a key area for the application of machine learning techniques.",
+    "Through a series of recent breakthroughs, deep learning has boosted the entire field of machine learning."
+]
+
+
+
+filtered_tokens = []
+for doc in documents:
+    tokens = doc.lower().split()
+    filtered = [token for token in tokens if token.isalnum()]
+    filtered_tokens.append(" ".join(filtered))
+print(filtered_tokens)
+cv = CountVectorizer()
+doc_matrix = cv.fit_transform(filtered_tokens)
+td = pd.DataFrame(doc_matrix.toarray(),columns=cv.get_feature_names_out())
+print(td)
+
+
+
+#IDF matrix
+tdm_bool = td.astype(bool).astype(int)
+print("\nBinary Document-Term Matrix:")
+print(tdm_bool)
+print(tdm_bool.shape)
+N=len(documents)
+query_text = "natural language processing"
+query = ["natural language processing"]
+query_set = query_text.split(" ")
+query_vector = cv.transform(query).toarray()[0].tolist()
+print(query_vector)
+
+
+for i in range(tdm_bool.shape[1]):
+  term_name = tdm_bool.columns[i]
+  vect = tdm_bool.iloc[:,i]
+
+  doc_freq = vect.sum()
+  idf = np.log(N/doc_freq)
+  tdm_bool.iloc[:,i].replace(1,idf,inplace=True)
+  if term_name in query_set:
+    query_vector[i] = idf
+print(query_vector)
+
+cos_sim = {}
+for i in range(tdm_bool.shape[0]):
+    doc_vector = td.iloc[i].tolist()
+    similarity = dot(doc_vector, query_vector) / (norm(doc_vector) * norm(query_vector))
+    cos_sim[i] = similarity
+print(cos_sim)
+# Print Results
+print("Cosine Similarity Scores:")
+
+cos_sim = sorted(cos_sim.items(),key = lambda x: x[1], reverse = True)
+
+
+
+#Phase 2
+
+k = 2
+relevant_docs = []
+print(cos_sim)
+for i in range(k):
+    relevant_docs.append(cos_sim[i][0])
+print(relevant_docs)
+N = len(documents)  # Total number of documents
+S = len(relevant_docs)  # Number of relevant documents
+cv = CountVectorizer()
+doc_matrix = cv.fit_transform(filtered_tokens)
+td = pd.DataFrame(doc_matrix.toarray(),columns=cv.get_feature_names_out())
+print(td)
+
+td_bool = td.astype(bool).astype(int)
+print(td_bool)
+
+bim_scores={}
+for t in query_set:
+
+  n = td_bool[t].sum()
+  s=0
+  for i in relevant_docs:
+    if td_bool[t].iloc[i]>0:
+      s+=1
+  numerator = (S + 0.5) / (S - s + 0.5)
+  denominator = (n - s + 0.5) / (N - S - n + s + 0.5)
+  bim_score = np.log2(numerator / denominator)
+  bim_scores[t] = bim_score
+print(bim_scores)
+
+scores={}
+
+for j in range(tdm_bool.shape[0]):
+    vec = tdm_bool.iloc[j]
+    score = 0
+    for term in query_set:
+
+        score += vec[term] * bim_scores[term]
+    scores[j]=score
+print("\nFinal BIM scores:", scores)
+
+
