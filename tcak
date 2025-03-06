@@ -1,0 +1,91 @@
+import pandas as pd
+
+# Expanded dataset
+texts = [
+    "What is the capital of France?",...
+]
+
+# Assign labels: 1 for questions, 0 for statements
+labels = [
+    1, 0, 1, .... 
+]
+
+# Create a DataFrame
+df = pd.DataFrame({'text': texts, 'label': labels})
+
+# Save to a CSV file
+csv_filename = "text_classification_dataset.csv"
+df.to_csv(csv_filename, index=False)
+
+print(f"Expanded dataset saved as {csv_filename}")
+
+import pandas as pd
+import numpy as np
+import re
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import LabelEncoder
+
+
+df = pd.read_csv("/content/drive/MyDrive/text_classification_dataset.csv")
+
+def preprocess_text(text):
+    text = text.lower()
+    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+df["text"] = df["text"].apply(preprocess_text)
+label_encoder = LabelEncoder()
+df["label"] = label_encoder.fit_transform(df["label"])
+X_train, X_test, y_train, y_test = train_test_split(df["text"], df["label"], test_size=0.3, random_state=42)
+
+vectorizer = TfidfVectorizer(min_df=2, max_features=10000)
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
+
+models = {
+    "Logistic Regression": LogisticRegression(max_iter=1000),
+    "Random Forest": RandomForestClassifier(n_estimators=200),
+    "SVM": SVC(kernel="linear", probability=True),
+    "Naive Bayes": MultinomialNB()
+}
+
+best_model = None
+best_accuracy = 0
+
+for name, model in models.items():
+    scores = cross_val_score(model, X_train_tfidf, y_train, cv=5, scoring='accuracy')
+    avg_score = scores.mean()
+    print(f"{name} Accuracy: {avg_score:.4f}")
+
+    if avg_score > best_accuracy:
+        best_accuracy = avg_score
+        best_model = model
+
+best_model.fit(X_train_tfidf, y_train)
+
+y_pred = best_model.predict(X_test_tfidf)
+accuracy = accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+print(f"\nBest Model: {best_model.__class__.__name__}")
+print(f"Test Accuracy: {accuracy:.4f}")
+print("Classification Report:\n", report)
+
+new_texts = ["What is machine?", "I love going to gym.", "Can you help me with math?"]
+new_texts_processed = [preprocess_text(text) for text in new_texts]
+new_texts_tfidf = vectorizer.transform(new_texts)
+
+predictions = best_model.predict(new_texts_tfidf)
+probabilities = best_model.predict_proba(new_texts_tfidf)
+
+for text, pred, prob in zip(new_texts, predictions, probabilities):
+    print(f"\nText: {text}")
+    print(f"Prediction: {'Question' if pred == 1 else 'Answer'}")
+    print(f"Confidence: {max(prob):.2f}")
