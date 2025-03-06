@@ -1,0 +1,120 @@
+import pandas as pd
+import numpy as np
+import re
+import math
+from collections import Counter
+
+# Load dataset
+df = pd.read_csv("/content/drive/MyDrive/documents.csv")
+
+# Extract text from dataset
+documents = df["text"].tolist()
+
+# Sample query
+query = "Machine learning Algorithms"
+
+def tokenize(doc):
+    """Tokenize and lowercase the document."""
+    return doc.lower().split()
+
+def preprocess_text(text):
+    text = text.lower()
+    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+def normalize(tokens):
+    """Perform basic stemming (removes plural 's' if not 'ss')."""
+    return [token[:-1] if token.endswith('s') and not token.endswith('ss') else token for token in tokens]
+
+def compute_dictionary(normalized_docs):
+    """Creates a sorted list of unique terms from the documents."""
+    dictionary = set()
+    for doc in normalized_docs:
+        dictionary.update(doc)
+    return sorted(list(dictionary))
+
+def create_term_document_matrix(query_terms, normalized_docs, model_type="binary"):
+    """Creates a term-document matrix:
+    - "binary": 1 if term appears in doc, else 0 (BIM)
+    - "multinomial": term frequency in doc (TF-based)"""
+
+    num_terms = len(query_terms)
+    num_docs = len(normalized_docs)
+    matrix = np.zeros((num_terms, num_docs), dtype=int)
+
+    for i, term in enumerate(query_terms):
+        for j, doc in enumerate(normalized_docs):
+            if model_type == "binary":
+                matrix[i, j] = 1 if term in doc else 0
+            elif model_type == "multinomial":
+                matrix[i, j] = doc.count(term)  # Count occurrences of term in document
+
+    return matrix
+
+def probabilistic_model(query_terms, term_doc_matrix, model_type="binary", relevant_docs=None):
+    """Computes BIM or Multinomial Probabilistic Model scores using textbook formulas."""
+    num_docs = term_doc_matrix.shape[1]
+    relevant_docs = relevant_docs or []
+    S = len(relevant_docs)  # Number of relevant docs
+
+    # Compute document frequency for each query term
+    t_i = np.sum(term_doc_matrix > 0, axis=1) if model_type == "binary" else np.sum(term_doc_matrix, axis=1)
+
+    # Compute s_i (relevant docs containing each term)
+    s_i = np.sum(term_doc_matrix[:, relevant_docs], axis=1) if S > 0 else np.zeros(len(query_terms))
+
+    # Compute probabilities using textbook formulas
+    p_i = (s_i + 0.5) / (S + 1)  # P(w|R)
+    u_i = (t_i - s_i + 0.5) / (num_docs - S + 1)  # P(w|~R)
+
+    # Compute weights using textbook formula
+    weights = np.log((p_i * (1 - u_i)) / ((1 - p_i) * u_i))
+
+    # Compute document scores
+    scores = np.dot(weights, term_doc_matrix)
+
+    return scores
+
+def main(model_type="binary"):
+    """Runs the probabilistic IR model with both BIM & Multinomial models."""
+    # Tokenization and normalization
+    tokenized_docs = [tokenize(doc) for doc in documents]
+    normalized_docs = [normalize(tokens) for tokens in tokenized_docs]
+
+    print(f"\nRunning {model_type.upper()} Model\n")
+
+    # Process query as text
+    tokenized_query = tokenize(query)
+    normalized_query = normalize(tokenized_query)
+
+    # Create Term-Document Matrix
+    term_doc_matrix = create_term_document_matrix(normalized_query, normalized_docs, model_type)
+
+    # Compute initial ranking
+    initial_scores = probabilistic_model(normalized_query, term_doc_matrix, model_type)
+    ranked_indices = np.argsort(-initial_scores)
+
+    print("Initial ranking:")
+    for rank, idx in enumerate(ranked_indices, 1):
+        print(f"Rank {rank}: d{idx+1} (Score: {initial_scores[idx]:.4f})")
+    print()
+
+    # Assume top 2 documents are relevant
+    top_2 = ranked_indices[:2]
+    relevant_docs = list(top_2)
+
+    print(f"Assuming documents {['d' + str(i + 1) for i in relevant_docs]} are relevant")
+
+    # Compute updated ranking after relevance feedback
+    updated_scores = probabilistic_model(normalized_query, term_doc_matrix, model_type, relevant_docs)
+    final_ranked_indices = np.argsort(-updated_scores)
+
+    print("Final ranking after relevance feedback:")
+    for rank, idx in enumerate(final_ranked_indices, 1):
+        print(f"Rank {rank}: d{idx+1} (Score: {updated_scores[idx]:.4f})")
+
+if __name__ == "__main__":
+    # Run both models
+    main(model_type="binary")  # Run Binary Independence Model (BIM)
+    main(model_type="multinomial")  # Run Multinomial Model (TF-based)
