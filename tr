@@ -1,0 +1,55 @@
+import cv2
+import numpy as np
+import math
+
+# Read image (grayscale)
+img = cv2.imread("input.jpg", cv2.IMREAD_GRAYSCALE)
+
+# ---------------------------
+# 1. Negative Transformation
+# ---------------------------
+def negative_transformation(image):
+    rows, cols = image.shape
+    neg = np.zeros_like(image)
+    for i in range(rows):
+        for j in range(cols):
+            neg[i, j] = 255 - image[i, j]
+    return neg
+
+# ---------------------------
+# 2. Log Transformation
+# s = c * log(1 + r)
+# ---------------------------
+def log_transformation(image):
+    rows, cols = image.shape
+    log_img = np.zeros_like(image, dtype=np.float32)
+    c = 255 / math.log(1 + np.max(image))
+    for i in range(rows):
+        for j in range(cols):
+            log_img[i, j] = c * math.log(1 + image[i, j])
+    return np.uint8(log_img)
+
+# ---------------------------
+# 3. Gamma (Power-law) Transformation
+# s = c * r^gamma
+# ---------------------------
+def gamma_transformation(image, gamma=0.5):
+    rows, cols = image.shape
+    gamma_img = np.zeros_like(image, dtype=np.float32)
+    c = 255 / (255 ** gamma)   # Normalization constant
+    for i in range(rows):
+        for j in range(cols):
+            gamma_img[i, j] = c * (image[i, j] ** gamma)
+    return np.uint8(gamma_img)
+
+# Apply transformations
+negative_img = negative_transformation(img)
+log_img = log_transformation(img)
+gamma_img = gamma_transformation(img, gamma=0.4)  # Try gamma <1 and >1
+
+# Save results
+cv2.imwrite("output_negative.jpg", negative_img)
+cv2.imwrite("output_log.jpg", log_img)
+cv2.imwrite("output_gamma.jpg", gamma_img)
+
+print("Transformations applied and images saved.")
