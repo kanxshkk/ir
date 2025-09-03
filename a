@@ -1,0 +1,110 @@
+1. Histogram
+
+Code: (we already wrote).
+Analysis:
+
+A histogram shows the frequency distribution of intensity levels (0–255).
+
+It is useful for: contrast analysis, detecting brightness issues, thresholding, equalization.
+
+Example: A dark image has most pixels clustered in the left (low intensity).
+
+In exams, you can explain: “Histogram is used to understand image characteristics before enhancement or segmentation.”
+
+🔹 2. Gray Level Transformation
+
+Operations: Negative, Log, Gamma.
+Analysis:
+
+Negative: 255 – img → highlights dark regions, useful for medical imaging (X-rays).
+
+Log transform: Expands dark regions, compresses bright → useful for images with high dynamic range.
+
+Power-law (gamma): Enhances either dark or bright regions depending on γ < 1 or > 1.
+👉 These are used to improve visibility and contrast for human interpretation.
+
+🔹 3. Edge Detection
+
+Why needed?
+
+Edges represent boundaries of objects.
+
+Detecting edges helps in object detection, shape analysis, segmentation.
+
+Masks: Sobel, Prewitt, Laplacian → highlight intensity changes.
+
+Canny (multi-step): gives thin and accurate edges (gradient + non-max suppression + thresholding).
+👉 Example: In self-driving cars, edges detect road lanes.
+
+🔹 4. Binary Image Analysis (Connected Components)
+
+Analysis:
+
+Converts grayscale → binary (object vs background).
+
+Connected Component Labeling: Finds separate objects in a binary image.
+
+Useful in OCR (finding letters), medical imaging (tumor detection), industrial inspection (counting objects).
+👉 You can say: “It gives unique labels to different objects so that further analysis (like size, shape, count) can be done.”
+
+🔹 5. Arithmetic & Logical Operations
+
+Operations: Addition, Subtraction, AND, OR.
+Analysis:
+
+Addition: Enhances brightness or merges two images (e.g., blending watermark on an image).
+
+Subtraction: Used for change detection (motion detection, background subtraction in video).
+
+AND: Extracts overlapping parts (e.g., masking specific regions).
+
+OR: Combines information from two images.
+👉 Example Q: Why do we add two images?
+Answer: “To merge information from multiple sources, like overlaying a watermark, or enhancing medical images by combining scans.”
+
+🔹 6. Sampling & Quantization
+
+Analysis:
+
+Sampling: Reduces spatial resolution (rows/cols). Used in compression (smaller images).
+
+Quantization: Reduces gray levels. Used in fax, low-bit displays, compression.
+👉 Example: A 2-bit quantized image has only 4 intensity levels → reduces memory but may lose detail.
+
+🔹 7. Thresholding (Binary, Otsu, Multi)
+
+Analysis:
+
+Binary Threshold: Simple object/background separation (good when background intensity is uniform).
+
+Otsu’s Method: Automatically finds threshold by maximizing variance between foreground & background.
+
+Multi-thresholding: Separates image into multiple regions.
+👉 Applications: Document binarization (OCR), medical segmentation, license plate detection.
+
+🔹 8. Zero Order Hold (ZOH) & First Order Hold (FOH)
+
+Analysis:
+
+ZOH: Nearest neighbor replication → blocky, pixelated enlargement. Simple, fast.
+
+FOH (bilinear): Smoother enlargement using interpolation.
+👉 Applications:
+
+ZOH → when speed matters (real-time video).
+
+FOH → when quality matters (image editing, medical imaging).
+👉 Viva Q: Why not always use FOH?
+Because it’s slower, requires computation.
+
+🔹 9. Basic Image Operations
+
+Examples: Flip, Rotate, Crop.
+Analysis:
+
+Flip: Horizontal (mirror), Vertical → data augmentation.
+
+Rotate: Alignment of images (useful in OCR, medical scans).
+
+Crop: Focuses on region of interest.
+👉 Example: In face recognition, cropping extracts just the face region for further processing.
