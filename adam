@@ -1,0 +1,30 @@
+ADAM OPTIMIZER
+
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+import numpy as np
+
+# Generate some sample data
+X = np.array([-1, 0, 1, 2, 3, 4], dtype=float)
+Y = np.array([-3, -1, 1, 3, 5, 7], dtype=float)
+
+# Create a simple sequential model
+model = Sequential()
+model.add(Dense(1, input_dim=1))
+
+# Compile the model with the Adam optimizer
+# The learning rate can be tuned
+adam = Adam(learning_rate=0.1)
+model.compile(loss='mean_squared_error', optimizer=adam)
+
+# Train the model
+model.fit(X, Y, epochs=100, verbose=0)
+
+# Make predictions
+predictions = model.predict(X)
+print("Predictions:", predictions.flatten())
+
+# Print the learned weights
+print("Learned weights (w, b):", [layer.get_weights() for layer in model.layers])
