@@ -87,6 +87,9 @@ for init_name, init in initializers.items():
         results_reg[label] = acc
 
 
+from tensorflow.keras.utils import plot_model
+plot_model(model, to_file="model.png", show_shapes=True, show_layer_names=True)
+
 # Plot comparison
 plt.figure(figsize=(14,6))
 
