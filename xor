@@ -1,0 +1,67 @@
+**NEURAL** NETWORK AND XOR
+
+import numpy as np
+
+# Sigmoid activation function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# Derivative of sigmoid
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# Training data (XOR example)
+X = np.array([[0,0],
+              [0,1],
+              [1,0],
+              [1,1]])
+
+y = np.array([[0],
+              [1],
+              [1],
+              [0]])
+
+# Seed for reproducibility
+np.random.seed(42)
+
+# Initialize weights and biases
+input_layer_size = 2
+hidden_layer_size = 4
+output_layer_size = 1
+
+W1 = np.random.randn(input_layer_size, hidden_layer_size)
+b1 = np.zeros((1, hidden_layer_size))
+W2 = np.random.randn(hidden_layer_size, output_layer_size)
+b2 = np.zeros((1, output_layer_size))
+print(W1)
+# Training parameters
+learning_rate = 0.1
+epochs = 10000
+
+for epoch in range(epochs):
+    # Forward pass
+    z1 = np.dot(X, W1) + b1
+    a1 = sigmoid(z1)
+    z2 = np.dot(a1, W2) + b2
+    a2 = sigmoid(z2)
+
+    # Loss (mean squared error)
+    loss = np.mean((y - a2) ** 2)
+
+    # Backpropagation
+    error_output = (a2 - y) * sigmoid_derivative(a2)
+    error_hidden = np.dot(error_output, W2.T) * sigmoid_derivative(a1)
+
+    # Update weights and biases
+    W2 -= learning_rate * np.dot(a1.T, error_output)
+    b2 -= learning_rate * np.sum(error_output, axis=0, keepdims=True)
+    W1 -= learning_rate * np.dot(X.T, error_hidden)
+    b1 -= learning_rate * np.sum(error_hidden, axis=0, keepdims=True)
+
+    # Print progress
+    if epoch % 1000 == 0:
+        print(f"Epoch {epoch}, Loss: {loss:.4f}")
+
+# Test predictions
+print("Predictions:")
+print(a2)
