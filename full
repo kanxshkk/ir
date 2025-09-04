@@ -8,6 +8,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.initializers import Zeros, Constant, GlorotUniform, HeNormal
 from tensorflow.keras.callbacks import EarlyStopping
+import pandas as pd
+import seaborn as sns
 
 tf.config.run_functions_eagerly(True)
 
@@ -15,6 +17,16 @@ tf.config.run_functions_eagerly(True)
 iris = load_iris()
 X, y = iris.data, iris.target
 X = StandardScaler().fit_transform(X)
+
+
+
+# Load dataset with pandas
+iris_df = sns.load_dataset("iris")
+# Features and target
+X = iris_df.drop("species", axis=1).values   # 4 feature columns
+y = iris_df["species"].astype("category").cat.codes.values  # convert species to 0,1,2
+
+
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 y_train = tf.keras.utils.to_categorical(y_train, num_classes=3)
